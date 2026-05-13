@@ -62,22 +62,23 @@ When the portable app is downloaded and extracted:
 
 ## Building
 
-### Microsoft Visual Studio
-This project can be build with Visual Studio 2022. Install the "Desktop Development with C++" workload and the "C++ Windows XP Support for VS 2017 (v141) tools" component. Open the Solution file "SpookyView.sln" and build the SpookyView project within.
+See [BUILDING.md](BUILDING.md) for full toolchain setup, including
+Chocolatey / Scoop one-liners to install MinGW-w64 + GNU make.
 
-### MinGW-w64 with Microsoft Visual Studio Code
-To build with the MinGW-w64 standalone version, use the Build task available for Microsoft Visual Studio Code. Debugging is also available with the included debug configuration. Simply build the project first and start the debugger afterwards.
+Quick paths:
 
-### MinGW-w64 on the command line
-The project can also be build via the command line and the MinGW-w64 standalone version. First build the resource and manifest file:
-- ```windres.exe SpookyView.rc .\\obj\\SpookyViewRes.o```
-- ```windres.exe Manifest.rc .\\obj\\Manifest.o```
+* **Visual Studio 2022** — install *Desktop Development with C++* plus the
+  *C++ Windows XP Support for VS 2017 (v141) tools* component, then open
+  `SpookyView.sln` and build the `SpookyView` project.
+* **MinGW-w64** (Debug only) — from the repo root:
 
-Then build the rest of the project:
+  ```
+  make restore
+  make
+  ```
 
-```mingw32-make.exe```
-
-When using MSYS2 or another Unix based environment, use the  ```windres``` and ```make``` executables instead.
+  A VS Code build task (`Build Debug version with MinGW-w64`) is also
+  provided.
 
 ## License
 Spooky View is licensed under the GNU GLP v3.0 or later. See the LICENSE file for more details.
