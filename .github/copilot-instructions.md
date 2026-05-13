@@ -99,6 +99,29 @@ Core components:
   `RandomizedBaseAddress`, `HighEntropyVA`, `DataExecutionPrevention`.
   The `v141_xp` configs cannot emit CFG / `/Qspectre` / `/CETCOMPAT` — do
   not try to add them there.
+- **Logging.** `Logger.h` / `Logger.cpp` is the canonical logger. Call
+  `Logger::Instance().Init()` at startup (already wired in
+  `AppMain::Run`), then use `LOG_INFO` / `LOG_WARN` / `LOG_ERROR`. Logs
+  land at `%LOCALAPPDATA%\SpookyView\spookyview.log` (with naive 1 MiB
+  rotation → `.old`). Path building inside `Logger::Init` uses only
+  kernel32 string APIs (`lstrcpynW`/`lstrcatW`) — **do not switch to
+  `_snwprintf_s` with `%s` for wchar_t args**; MinGW's UCRT interprets
+  `%s` as `char*` even in wide-format strings and the call silently
+  truncates. Use `%ls` for wchar_t* in wide formats if you need
+  `_snwprintf`.
+- **Crash handler.** `CrashHandler::Install()` (called immediately after
+  `Logger::Init`) registers `SetUnhandledExceptionFilter` and writes a
+  minidump (`spookyview-crash-YYYYMMDD-HHMMSS-PID.dmp`) next to the log
+  on any unhandled SEH exception. Requires linking `dbghelp` (MSVC:
+  `#pragma comment(lib, "dbghelp.lib")` is already there; MinGW: the
+  makefile passes `-ldbghelp`).
+- **MinGW link flags.** `SpookyView/makefile` static-links the C/C++
+  runtime (`-static -static-libgcc -static-libstdc++`) so the produced
+  exe has no `libgcc_s_seh-1.dll` / `libstdc++-6.dll` dependency.
+  Removing `-static*` flags will reintroduce "missing DLL" errors on
+  clean machines. **Do not add `-nostdlib`** — it was in the original
+  makefile and broke secure-CRT functions; static linking achieves the
+  same goal cleanly.
 - **Line endings:** Most source files are CRLF (Windows defaults). New docs
   under `docs/` and root-level Markdown (`SECURITY.md`, `PRIVACY.md`) are
   LF. There is no `.gitattributes`; **stage explicitly by path** rather

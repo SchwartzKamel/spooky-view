@@ -112,6 +112,24 @@ this automatically on solution load.
 
 ---
 
+## Logs and crash dumps
+
+Spooky View writes a runtime log and (on unhandled SEH crashes) a minidump
+under:
+
+```
+%LOCALAPPDATA%\SpookyView\
+  spookyview.log
+  spookyview.log.old   (after 1 MiB rotation)
+  spookyview-crash-YYYYMMDD-HHMMSS-PID.dmp
+```
+
+When filing a bug, attach `spookyview.log` and the latest `.dmp` if present.
+Open the dump in Visual Studio (`File → Open → File…`) or WinDbg to inspect
+the crashing stack.
+
+---
+
 ## Troubleshooting
 
 * **`'make' is not recognized`** — install via choco/scoop (above) and open a

@@ -9,6 +9,7 @@
 #include "UpdateResponse.h"
 #include "ISettingsManager.h"
 #include "WindowsEnum.h"
+#include "Logger.h"
 #ifdef UNICODE
 #include "UnicodeConversion.h"
 #endif //UNICODE
@@ -144,8 +145,19 @@ LRESULT CALLBACK CMainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
 				buffer[copyLen] = '\0';
 				if (strcmp(buffer, "Spooky View - already running") == 0)
 				{
+					LOG_INFO("WM_COPYDATA: already-running ping accepted");
 					OpenSetupDialog();
 				}
+				else
+				{
+					LOG_WARN("WM_COPYDATA: dwData=%lu cbData=%lu payload mismatch; dropping",
+						(unsigned long)dataCopy->dwData, (unsigned long)dataCopy->cbData);
+				}
+			}
+			else if (dataCopy != NULL)
+			{
+				LOG_WARN("WM_COPYDATA: rejected dwData=%lu cbData=%lu",
+					(unsigned long)dataCopy->dwData, (unsigned long)dataCopy->cbData);
 			}
 		}
 		return FALSE;

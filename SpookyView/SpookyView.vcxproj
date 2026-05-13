@@ -491,10 +491,12 @@
   <ItemGroup>
     <ClInclude Include="AppMain.h" />
     <ClInclude Include="CIntroDialog.h" />
+    <ClInclude Include="CrashHandler.h" />
     <ClInclude Include="CUpdateAvailableDialog.h" />
     <ClInclude Include="Textbox.h" />
     <ClInclude Include="UnicodeConversion.h" />
     <ClInclude Include="UpdateChecker.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="CAbout.h" />
     <ClInclude Include="CAddAppDialog.h" />
     <ClInclude Include="CAddWindowDialog.h" />
@@ -529,10 +531,12 @@
   <ItemGroup>
     <ClCompile Include="AppMain.cpp" />
     <ClCompile Include="CIntroDialog.cpp" />
+    <ClCompile Include="CrashHandler.cpp" />
     <ClCompile Include="CUpdateAvailableDialog.cpp" />
     <ClCompile Include="Textbox.cpp" />
     <ClCompile Include="UnicodeConversion.cpp" />
     <ClCompile Include="UpdateChecker.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="CAbout.cpp" />
     <ClCompile Include="CAddAppDialog.cpp" />
     <ClCompile Include="CAddWindowDialog.cpp" />

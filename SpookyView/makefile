@@ -8,9 +8,13 @@ SRC := $(wildcard *.cpp)
 OBJ := $(SRC:%.cpp=$(OBJ_DIR)/%.o)
 RES := $(OBJ_DIR)/SpookyViewRes.o $(OBJ_DIR)/Manifest.o
 
-CXXFLAGS := -std=c++14 -DWIN32 -D_WINDOWS -DDEBUG -DUNICODE -D_UNICODE -g -nostdlib \
+CXXFLAGS := -std=c++14 -DWIN32 -D_WINDOWS -DDEBUG -DUNICODE -D_UNICODE -g \
             -I. -I..\packages\nlohmann.json.3.10.5\build\native\include
-LDFLAGS  := -lcomctl32 -lcomdlg32 -lshlwapi -lversion -lpsapi -lwinhttp -mwindows -municode
+# Static-link the C/C++ runtime so the resulting exe has no libgcc/libstdc++
+# DLL dependencies — fixes "missing DLL" errors on clean target machines.
+LDFLAGS  := -static -static-libgcc -static-libstdc++ \
+            -lcomctl32 -lcomdlg32 -lshlwapi -lversion -lpsapi -lwinhttp \
+            -lshell32 -ldbghelp -mwindows -municode
 
 .PHONY: build clean
 

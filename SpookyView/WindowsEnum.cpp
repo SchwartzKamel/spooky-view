@@ -593,7 +593,7 @@ BOOL WindowsEnum::GetWindowProcessAndClass(HWND hwnd)
 			if (pathLen == 0)
 			{
 				CloseHandle(hProcess);
-				return NULL;
+				return FALSE;
 			}
 			filePathName[ARRAYSIZE(filePathName) - 1] = _T('\0');
 			fileName = _tcsrchr(filePathName, '\\');

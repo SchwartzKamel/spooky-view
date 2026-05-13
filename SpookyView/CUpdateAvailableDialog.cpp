@@ -5,6 +5,7 @@
 #include <memory>
 #include "ISettingsManager.h"
 #include "SpookyView.h"
+#include "Logger.h"
 
 namespace
 {
@@ -64,7 +65,12 @@ INT_PTR CALLBACK CUpdateAvailableDialog::DlgProc(HWND hDlg, UINT message, WPARAM
 #ifndef PACKAGING_STORE
 			if (IsTrustedDownloadUrl(this->downloadUrl.c_str()))
 			{
+				LOG_INFO("Opening trusted update download URL");
 				ShellExecute(NULL, _T("open"), this->downloadUrl.c_str(), NULL, NULL, SW_SHOWNORMAL);
+			}
+			else
+			{
+				LOG_WARN("Refused untrusted update download URL");
 			}
 #endif // !PACKAGING_STORE
 			DestroyWindow(hDlg);
