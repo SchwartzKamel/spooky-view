@@ -39,5 +39,5 @@ $(BIN_DIR):
 	@if not exist "$(BIN_DIR)" mkdir "$(BIN_DIR)"
 
 clean:
-	@if exist "$(OBJ_DIR)" rmdir /s /q "$(OBJ_DIR)"
-	@if exist "$(BIN_DIR)" rmdir /s /q "$(BIN_DIR)"
+	@if exist "$(OBJ_DIR)\*.o" del /q "$(OBJ_DIR)\*.o"
+	@if exist "$(BIN_DIR)\SpookyView.exe" del /q "$(BIN_DIR)\SpookyView.exe"
