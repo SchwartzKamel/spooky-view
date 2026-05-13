@@ -38,7 +38,7 @@ int AppMain::Run()
 		return FALSE;
 	}
 
-	CLimitSingleInstance singleInstanceObj(_T("SpookyView"));
+	CLimitSingleInstance singleInstanceObj(_T("Local\\SpookyView-SingleInstance-{7CE47E95-8AA0-4B62-87FD-CA1242022F47}"));
 	if (singleInstanceObj.IsAnotherInstanceRunning())
 	{
 		SendAlreadyRunningNotify();

@@ -196,7 +196,7 @@ void CAddAppDialog::SetSelectedProgram()
 	if (index >= 0)
 	{
 		TCHAR textBuffer[MAX_PATH];
-		LPTSTR text = this->appsListView->GetTextByIndex(index, textBuffer);
+		LPTSTR text = this->appsListView->GetTextByIndex(index, textBuffer, _countof(textBuffer));
 		this->programTextbox->SetText(text);
 	}
 }

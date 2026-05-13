@@ -11,3 +11,4 @@ When checking for updates the following details are send to https://updates.tynd
 - language of Windows for current user (for example: en-US)
 - computer architecture (x64, x86, AArch64)
 - packaging format (Microsoft Store, MSI, Portable)
+- a `pre_release=1` flag (only when the running build was compiled as a pre-release build)

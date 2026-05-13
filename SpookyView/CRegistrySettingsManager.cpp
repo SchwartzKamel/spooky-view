@@ -305,15 +305,45 @@ BOOL CRegistrySettingsManager::ReadKeyByteValue(HKEY key, TCHAR* valueName, BYTE
 BOOL CRegistrySettingsManager::ReadValue(HKEY key, TCHAR *valueName, DWORD expectedKeyType, BYTE *dataBuffer, DWORD dataBufferSize)
 {
 	DWORD keyType;
-	auto result = RegQueryValueEx(key, valueName, NULL, &keyType, dataBuffer, &dataBufferSize);
-	return result == ERROR_SUCCESS && keyType == expectedKeyType;
+	DWORD bytesAvailable = dataBufferSize;
+	auto result = RegQueryValueEx(key, valueName, NULL, &keyType, dataBuffer, &bytesAvailable);
+	if (result != ERROR_SUCCESS || keyType != expectedKeyType)
+	{
+		return FALSE;
+	}
+	// REG_SZ values are not guaranteed to be NUL-terminated by the registry.
+	// Force termination inside the caller's buffer to avoid downstream OOB reads.
+	if ((expectedKeyType == REG_SZ || expectedKeyType == REG_EXPAND_SZ || expectedKeyType == REG_MULTI_SZ)
+		&& dataBuffer != NULL && dataBufferSize >= sizeof(TCHAR))
+	{
+		dataBuffer[dataBufferSize - 1] = 0;
+		if (dataBufferSize >= 2 * sizeof(TCHAR))
+		{
+			dataBuffer[dataBufferSize - 2] = 0;
+		}
+	}
+	return TRUE;
 }
 
 BOOL CRegistrySettingsManager::ReadValue(TCHAR *subkey, TCHAR *valueName, DWORD expectedKeyType, BYTE *dataBuffer, DWORD dataBufferSize)
 {
 	DWORD keyType;
-	auto result = SHGetValue(HKEY_CURRENT_USER, subkey, valueName, &keyType, dataBuffer, &dataBufferSize);
-	return result == ERROR_SUCCESS && keyType == expectedKeyType;
+	DWORD bytesAvailable = dataBufferSize;
+	auto result = SHGetValue(HKEY_CURRENT_USER, subkey, valueName, &keyType, dataBuffer, &bytesAvailable);
+	if (result != ERROR_SUCCESS || keyType != expectedKeyType)
+	{
+		return FALSE;
+	}
+	if ((expectedKeyType == REG_SZ || expectedKeyType == REG_EXPAND_SZ || expectedKeyType == REG_MULTI_SZ)
+		&& dataBuffer != NULL && dataBufferSize >= sizeof(TCHAR))
+	{
+		dataBuffer[dataBufferSize - 1] = 0;
+		if (dataBufferSize >= 2 * sizeof(TCHAR))
+		{
+			dataBuffer[dataBufferSize - 2] = 0;
+		}
+	}
+	return TRUE;
 }
 
 BOOL CRegistrySettingsManager::SaveValue(HKEY hKey, TCHAR* valueName, DWORD keyType, BYTE* value, DWORD valueSize)
@@ -349,9 +379,10 @@ BOOL CRegistrySettingsManager::SaveStringValue(HKEY hKey, TCHAR* valueName, tstr
 
 BOOL CRegistrySettingsManager::ShouldSkipVersion(tstring versionNumber)
 {
-	TCHAR keyData[100];
+	TCHAR keyData[100] = { 0 };
 	if (ReadValue(_T("Software\\Spooky View"), _T("Skip version"), REG_SZ, (BYTE*)keyData, sizeof(keyData)))
 	{
+		keyData[_countof(keyData) - 1] = _T('\0');
 		return versionNumber.compare(keyData) == 0;
 	}
 	return FALSE;

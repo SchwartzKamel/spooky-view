@@ -131,10 +131,18 @@ LRESULT CALLBACK CMainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
 				ReplyMessage(TRUE);
 			}
 			PCOPYDATASTRUCT dataCopy = (PCOPYDATASTRUCT)lParam;
-			if (dataCopy->dwData == ALREADY_RUNNING_NOTIFY)
+			if (dataCopy != NULL
+				&& dataCopy->dwData == ALREADY_RUNNING_NOTIFY
+				&& dataCopy->lpData != NULL
+				&& dataCopy->cbData >= sizeof("Spooky View - already running"))
 			{
-				CHAR *message = (CHAR*)dataCopy->lpData;
-				if (strrchr(message, *"Spooky View - already running"))
+				// Treat the payload as bytes and ensure NUL-termination within the declared length
+				// before any string compare. Drop anything that does not match exactly.
+				CHAR buffer[64];
+				DWORD copyLen = dataCopy->cbData < sizeof(buffer) ? dataCopy->cbData : (DWORD)sizeof(buffer) - 1;
+				memcpy(buffer, dataCopy->lpData, copyLen);
+				buffer[copyLen] = '\0';
+				if (strcmp(buffer, "Spooky View - already running") == 0)
 				{
 					OpenSetupDialog();
 				}

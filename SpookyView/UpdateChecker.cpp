@@ -19,8 +19,8 @@ void CreateUpdateCheckerThread()
 
 DWORD WINAPI UpdateCheckerThread(LPVOID lpParam)
 {
-	std::unique_ptr<UpdateChecker> autoUpdater;
-	autoUpdater->CheckForNewerVersion();
+	UpdateChecker autoUpdater;
+	autoUpdater.CheckForNewerVersion();
 	return 0;
 }
 
