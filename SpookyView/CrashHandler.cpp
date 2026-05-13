@@ -8,6 +8,7 @@
 namespace
 {
 	LPTOP_LEVEL_EXCEPTION_FILTER s_previousFilter = NULL;
+	PVOID s_vehHandle = NULL;
 
 	LONG WINAPI UnhandledFilter(EXCEPTION_POINTERS* info)
 	{
@@ -75,6 +76,33 @@ namespace
 		}
 		return EXCEPTION_EXECUTE_HANDLER;
 	}
+
+	LONG CALLBACK VectoredHandler(EXCEPTION_POINTERS* info)
+	{
+		// Only act on real fatal exceptions (skip C++ EH propagation 0xE06D7363,
+		// MSVC thread name 0x406D1388, breakpoints, single-step, debug strings).
+		if (!info || !info->ExceptionRecord) return EXCEPTION_CONTINUE_SEARCH;
+		DWORD code = info->ExceptionRecord->ExceptionCode;
+		switch (code)
+		{
+		case EXCEPTION_ACCESS_VIOLATION:
+		case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+		case EXCEPTION_DATATYPE_MISALIGNMENT:
+		case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+		case EXCEPTION_ILLEGAL_INSTRUCTION:
+		case EXCEPTION_IN_PAGE_ERROR:
+		case EXCEPTION_INT_DIVIDE_BY_ZERO:
+		case EXCEPTION_NONCONTINUABLE_EXCEPTION:
+		case EXCEPTION_PRIV_INSTRUCTION:
+		case EXCEPTION_STACK_OVERFLOW:
+			// First-chance fatal exception: log + minidump, then let it
+			// propagate so the OS terminates the process predictably.
+			UnhandledFilter(info);
+			return EXCEPTION_CONTINUE_SEARCH;
+		default:
+			return EXCEPTION_CONTINUE_SEARCH;
+		}
+	}
 }
 
 void CrashHandler::Install()
@@ -82,6 +110,33 @@ void CrashHandler::Install()
 	static bool installed = false;
 	if (installed) return;
 	s_previousFilter = SetUnhandledExceptionFilter(UnhandledFilter);
+
+	// Vectored handler runs first-chance, before the kernel callback filter
+	// can swallow exceptions thrown inside dialog/window procs on x64.
+	s_vehHandle = AddVectoredExceptionHandler(1, VectoredHandler);
+
+	// Best-effort: clear PROCESS_CALLBACK_FILTER_ENABLED so the unhandled
+	// exception filter still fires for crashes inside dialog procs on older
+	// Windows. Silent no-op if the API isn't exported by this build of
+	// kernel32 (Windows 11 moved/dropped some legacy APIs).
+	typedef BOOL(WINAPI* SetPolicyFn)(DWORD);
+	typedef BOOL(WINAPI* GetPolicyFn)(LPDWORD);
+	HMODULE hKernel = GetModuleHandleW(L"kernel32.dll");
+	if (hKernel)
+	{
+		auto pSet = (SetPolicyFn)GetProcAddress(hKernel, "SetProcessUserModeExceptionPolicy");
+		auto pGet = (GetPolicyFn)GetProcAddress(hKernel, "GetProcessUserModeExceptionPolicy");
+		if (pSet && pGet)
+		{
+			DWORD flags = 0;
+			if (pGet(&flags))
+			{
+				const DWORD PROCESS_CALLBACK_FILTER_ENABLED = 0x1;
+				pSet(flags & ~PROCESS_CALLBACK_FILTER_ENABLED);
+			}
+		}
+	}
+
 	installed = true;
-	LOG_INFO("Crash handler installed");
+	LOG_INFO("Crash handler installed (VEH=%p)", s_vehHandle);
 }

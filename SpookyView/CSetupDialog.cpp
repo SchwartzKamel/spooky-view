@@ -276,6 +276,7 @@ void CSetupDialog::CopySettings()
 void CSetupDialog::ProgramsListNotified()
 {
 	int index = this->appsListView->GetSelectedIndex();
+	LOG_INFO("ProgramsListNotified index=%d", index);
 	if (index > 0)
 	{
 		TCHAR textBuffer[MAX_PATH];
@@ -325,6 +326,7 @@ void CSetupDialog::ProgramsListNotified()
 void CSetupDialog::WindowsListNotified()
 {
 	int index = this->windowsListView->GetSelectedIndex();
+	LOG_INFO("WindowsListNotified index=%d currentProgram=%p", index, (void*)this->currentProgram);
 	if (index > 0)
 	{
 		TCHAR textBuffer[MAX_WINDOW_CLASS_NAME];
