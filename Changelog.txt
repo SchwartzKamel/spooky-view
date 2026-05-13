@@ -1,3 +1,15 @@
+1.1.1 (Hardened Build)
+--- Security hardening ---
+- Validated update download URL against the trusted update host before launching the browser (no more arbitrary URI handlers from a compromised update server)
+- Fixed stack buffer issues in the "Start at logon" registry write and in the ListView text retrieval helper
+- Single-instance mutex moved to a unique Local\ namespace to prevent cross-process squatting
+- WM_COPYDATA "already running" handshake now validates payload size and matches the message exactly
+- Tray icon text now uses safe copy APIs (no user strings used as printf-style format strings)
+- IsWindowTransparent now reads the correct window style flag so restore-on-exit works reliably
+- Hardened registry string reads to always be null-terminated
+- Enabled ControlFlowGuard, BufferSecurityCheck, RandomizedBaseAddress/HighEntropyVA, and DataExecutionPrevention on the v143 ARM64 release configurations
+- Documented the `pre_release=1` flag in PRIVACY.md
+
 0.0.0.1 (Funky Build!)
 Initial release
 - Read transparency values from registry
