@@ -211,7 +211,10 @@ LRESULT CALLBACK CMainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
 				}
 				if (!cSettingsDialog->hasInitInstance())
 				{
-					cSettingsDialog->InitInstance();
+					if (!cSettingsDialog->InitInstance())
+					{
+						LOG_ERROR("CSettingsDialog::InitInstance returned FALSE");
+					}
 				}
 				else
 				{
@@ -326,7 +329,10 @@ void CMainWindow::OpenSetupDialog()
 	}
 	if (!cSetupDialog->hasInitInstance())
 	{
-		cSetupDialog->InitInstance();
+		if (!cSetupDialog->InitInstance())
+		{
+			LOG_ERROR("CSetupDialog::InitInstance returned FALSE");
+		}
 	}
 	else
 	{

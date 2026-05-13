@@ -5,6 +5,7 @@
 #include <memory>
 #include "ISettingsManager.h"
 #include "SpookyView.h"
+#include "Logger.h"
 
 CSettingsDialog::CSettingsDialog(HINSTANCE hInstance, HWND hParent) : CModelessDialog(hInstance, hParent)
 {

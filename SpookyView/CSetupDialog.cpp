@@ -14,6 +14,7 @@
 #include "WindowsEnum.h"
 #include <cmath>
 #include "SpookyView.h"
+#include "Logger.h"
 
 #define TRANSPARENCY_TRACKER_STEPS (100.0 / 255.0)
 
