@@ -65,9 +65,11 @@ browser; the app does **not** auto-download or auto-install updates.
 
 ## Recent Audit
 
-A local security audit of this fork was performed in 2026. Findings, severity
-ratings, and a remediation table are documented in
-[`docs/SECURITY-AUDIT-2026.md`](docs/SECURITY-AUDIT-2026.md).
+A third-party security review of this fork was performed in 2026. Findings,
+severity ratings, and a remediation table are documented in
+[`docs/SECURITY-AUDIT-2026.md`](docs/SECURITY-AUDIT-2026.md). Please consult
+that document before filing a report — your finding may already be tracked
+there.
 
 The audit was conducted against a **local snapshot** of this fork without a
 line-by-line diff against `littletijn/spooky-view`. As a result, residual risk

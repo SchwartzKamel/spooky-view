@@ -5,6 +5,11 @@
 # Spooky View
 A Windows application to make any window transparent.
 
+> **Fork notice:** This is the SchwartzKamel hardened fork of
+> [littletijn/spooky-view](https://github.com/littletijn/spooky-view).
+> See [docs/SECURITY-AUDIT-2026.md](docs/SECURITY-AUDIT-2026.md) for the
+> security review and [Changelog.txt](Changelog.txt) for changes.
+
 ## System requirements
 This application will run on Windows XP and newer.
 
@@ -30,6 +35,21 @@ When downloading from Github, make sure to choose the correct version.
 - WPF (Windows Presentation Foundation) apps cannot be set transparent.
 - When stopping Spooky View, some apps will not return opaque. Restart the affected apps to revert them.
 - Only when Spooky View is run as administrator will it be able to make high privileges app transparent, like Windows Task Mananger.
+
+## Logging & Diagnostics
+
+- Log file: `%LOCALAPPDATA%\SpookyView\spookyview.log`. The log rotates at
+  ~1 MiB to `spookyview.log.old`. It is written locally and is never
+  uploaded anywhere by the app.
+- On an unhandled crash, a minidump named
+  `spookyview-crash-YYYYMMDD-HHMMSS-PID.dmp` is written to the same
+  directory by an internal Vectored Exception Handler. Windows Error
+  Reporting (WER) `LocalDumps` can additionally be enabled as a backup.
+
+### Troubleshooting
+
+- If a dialog doesn't open or the app exits unexpectedly, check
+  `spookyview.log` and any `.dmp` file in `%LOCALAPPDATA%\SpookyView\`.
 
 ## FAQ
 

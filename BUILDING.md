@@ -23,6 +23,54 @@ make               # Debug build → SpookyView/bin/SpookyView.exe
 
 Other targets: `make clean`, `make rebuild`, `make help`.
 
+`make clean` only removes the build artifacts (`SpookyView/obj/*.o` and
+`SpookyView/bin/SpookyView.exe`); the `.gitkeep` placeholders that keep
+`SpookyView/bin/` and `SpookyView/obj/` tracked in git are preserved
+(see commit `09c0863`). You can verify with:
+
+```powershell
+Get-ChildItem -Force SpookyView\bin, SpookyView\obj
+```
+
+Both directories should still contain `.gitkeep` after `make clean`.
+
+### Verifying the build
+
+The MinGW build statically links the C/C++ runtime (`-static -static-libgcc
+-static-libstdc++` in `SpookyView/makefile`), so the resulting `SpookyView.exe`
+has **no** `libgcc_s_seh-1.dll` / `libstdc++-6.dll` runtime dependency and
+should run on a clean Windows machine without shipping any MinGW DLLs.
+
+Confirm with `objdump`:
+
+```powershell
+objdump -p SpookyView\bin\SpookyView.exe | rg "libgcc|libstdc"
+```
+
+The command should print nothing. If it lists either DLL, the `-static*` flags
+were dropped from `SpookyView/makefile` — restore them.
+
+### Smoke test
+
+Launch the freshly built exe and confirm the logger / crash handler came up:
+
+```powershell
+& .\SpookyView\bin\SpookyView.exe
+Start-Sleep -Milliseconds 1000
+Get-Content "$env:LOCALAPPDATA\SpookyView\spookyview.log" -Tail 20
+```
+
+Within ~1 second the log should contain lines such as:
+
+```
+Logger initialized
+Crash handler installed (VEH=...)
+SpookyView starting
+```
+
+If the log file is missing or those lines are absent, the build is broken
+even if `make` succeeded. Right-click the tray icon → *Exit* to quit.
+
 ---
 
 ## Installing the MinGW-w64 toolchain
@@ -58,6 +106,17 @@ scoop install mingw make nuget
 
 Scoop installs to your user profile and avoids needing admin. Same verification
 commands as above.
+
+Scoop does not always update the *current* shell's PATH. If `g++`, `make`, or
+`windres` are not found after install, prepend Scoop's shim and MinGW `bin/`
+directories for the session:
+
+```powershell
+$env:PATH = "$env:USERPROFILE\scoop\shims;$env:USERPROFILE\scoop\apps\mingw\current\bin;$env:PATH"
+```
+
+This is the toolchain the maintainers build with: scoop-installed
+**MinGW (gcc / g++ 16.x)** and **GNU make 4.4.1**.
 
 ### Option C — MSYS2 (manual)
 

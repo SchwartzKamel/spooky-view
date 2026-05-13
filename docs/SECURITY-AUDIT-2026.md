@@ -365,3 +365,90 @@ remediation commit (`9311a0a`) warrants individual inspection.
 ---
 
 *End of report.*
+
+---
+
+## Post-audit stability hardening (2026-05)
+
+Three bugs surfaced while exercising the app under real use after the
+security audit closed. They are stability/correctness issues rather than
+security issues, but they materially affect the app's reliability on
+current Windows 11 builds and are recorded here so the audit document
+remains the canonical reference for the state of the tree.
+
+### Finding S1: Uninitialized `CDialog::hasInit` caused dialogs to silently no-op
+
+- Commit: `4d95df9`
+- Symptom: Tray menu Settings/Setup sometimes did nothing; About/Settings
+  worked only when fresh allocations happened to land on zeroed memory.
+- Root cause: `CDialog::hasInit` (and other base members) had no
+  in-class initializer. Non-zero garbage made `hasInitInstance()` return
+  `TRUE` before `InitInstance` ever ran, so `OpenDialog` called
+  `SetForeground` on a `NULL` `hWnd`.
+- Fix: In-class default initializers in `CDialog.h`, `CWnd.h`,
+  `CModelessDialog.h` (`hasInit = FALSE`, `dialogResource = NULL`,
+  `hParent = NULL`, `hWnd = NULL`, `parentHwnd = NULL`,
+  `key = 0`). Added `GetLastError` logging on the
+  `CreateDialogParam` failure path.
+- Lesson: Always default-init members in any class hierarchy that may be
+  allocated without zero-init.
+
+### Finding S2: MinGW UCRT `%s` vs `%ls` crash in `CAddAppDialog`
+
+- Commit: `7406459`
+- Symptom: Clicking "Add" in the Setup dialog crashed the entire process.
+- Root cause:
+  `_sntprintf_s(buf, n, _T("%s (*.exe)%c*.exe%c%s (*.*)%c*.*%c"), programFilterString, ...)`
+  at `CAddAppDialog.cpp:37`. Under MinGW UCRT, `_snwprintf_s`
+  interprets `%s` in a wide-format string as `char*`, **not**
+  `wchar_t*` like MSVC. Dereferencing a wide string as narrow → access
+  violation.
+- Fix: `%s` → `%ls` (works on both MinGW UCRT and MSVC).
+- Lesson: For any wide-format printf family call (`_snwprintf*`,
+  `wprintf`, `swprintf`, `StringCchPrintfW`, …), use `%ls` for
+  `wchar_t*` arguments. Audit all wide format strings in the codebase
+  (`Logger` path-build was already cleaned).
+
+### Finding S3: Windows x64 kernel-callback dispatcher swallows SEH from dialog procs
+
+- Commit: `ae6960b`
+- Symptom: Crashes inside dialog/window procs (e.g., clicking "All other
+  apps" in Setup) terminated the process with no log entry, no minidump,
+  and no WER report. `SetUnhandledExceptionFilter` was never called.
+- Root cause: On x64 Windows, exceptions raised inside callbacks invoked
+  by the kernel callback dispatcher (USER32 calling back into the app's
+  `WndProc`/`DialogProc`) are silently consumed by the kernel before
+  any user-mode top-level filter sees them.
+  `SetProcessUserModeExceptionPolicy` to clear
+  `PROCESS_CALLBACK_FILTER_ENABLED` is the documented workaround, but
+  those APIs are not exported by `kernel32` on current Windows 11
+  builds (`GetProcAddress` returns `NULL`).
+- Fix: Installed a vectored exception handler via
+  `AddVectoredExceptionHandler(1, VectoredHandler)` in
+  `CrashHandler::Install`. VEH runs first-chance, before the kernel's
+  filter ever sees the exception. The handler filters fatal codes (AV,
+  illegal instruction, divide-by-zero, stack overflow, etc.) and routes
+  them through the existing `UnhandledFilter` (writes a log entry and a
+  minidump alongside `spookyview.log`). Returns
+  `EXCEPTION_CONTINUE_SEARCH` so the OS still terminates predictably
+  after the dump is written. The best-effort
+  `SetProcessUserModeExceptionPolicy` call is retained but logged as a
+  no-op.
+- Lesson: `SetUnhandledExceptionFilter` alone is insufficient on x64
+  Windows for any GUI app. Use VEH as the primary catch-all. (Note: MinGW
+  g++ does **not** support MSVC `__try`/`__except` keywords, so
+  per-`WndProc` SEH wrapping isn't an option in this codebase.)
+
+### Operational guidance
+
+- **Log file:** `%LOCALAPPDATA%\SpookyView\spookyview.log` (1 MiB
+  rotation to `.old`).
+- **Crash dumps:** same directory, named
+  `spookyview-crash-YYYYMMDD-HHMMSS-PID.dmp`.
+- **For deeper triage**, enable Windows WER LocalDumps (full dumps) via:
+
+  `HKCU:\Software\Microsoft\Windows\Windows Error Reporting\LocalDumps\SpookyView.exe`
+
+  - `DumpFolder=%LOCALAPPDATA%\SpookyView`
+  - `DumpType=2`
+  - `DumpCount=10`
